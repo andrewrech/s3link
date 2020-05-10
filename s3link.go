@@ -92,7 +92,7 @@ func loadVars() (vars envVars, err error) {
 
 	token, _ := os.LookupEnv("S3LINK_AWS_SESSION_TOKEN")
 	if token != "" {
-		log.Println("Using temporary AWS credentials.")
+		log.Println("using temporary AWS credentials")
 	}
 
 	vars.bucket = b
@@ -138,7 +138,7 @@ func checkDuration(expire *string) (minutes *time.Duration) {
 	maxTime, _ := time.ParseDuration("10800m")
 
 	if m > maxTime {
-		log.Fatalln("Expiration duration is greater than maximum expiration duration of 7 days (10800 minutes)")
+		log.Fatalln("expiration duration is greater than maximum expiration duration of 7 days (10800 minutes)")
 	}
 
 	return &m

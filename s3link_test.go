@@ -26,7 +26,7 @@ func mainInner() {
 	q := true
 	qr := &q
 
-	p := true
+	p := false
 	public := &p
 
 	// begin test

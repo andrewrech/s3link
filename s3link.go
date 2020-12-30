@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"crypto/sha512"
+	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"flag"
@@ -266,23 +266,23 @@ func urlLine(conn *s3.S3, in chan string, minutes *time.Duration, public, qr *bo
 	done <- 1
 }
 
-// transformPrefix generates a hexadecimal encoded SHA-512 string using a
-// filename and the value of S3LINK_PREFIX_HASH.
-// The purpose is to use the string in an obfuscated public URL.
-func transformPrefix(name, h *string) (p string) {
-	var x strings.Builder
-
-	x.WriteString(*h)
-	x.WriteString(*name)
-
-	sha := sha512.Sum512([]byte(x.String()))
-
-	return (hex.EncodeToString(sha[:]))
+// randomBytes generates n random bytes
+func randomBytes(n int) []byte {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return b
 }
 
+// randomHex generates a random hex string with length of n
+// e.g: 67aab2d956bd7cc621af22cfb169cba8
+func randomHex(n int) string { return hex.EncodeToString(randomBytes(n)) }
+
 // key generates an AWS S3 key.
-func key(name string, pre *string) string {
-	p := transformPrefix(&name, pre)
+func key(name string) string {
+	p := randomHex(64)
 
 	var b strings.Builder
 
@@ -387,7 +387,7 @@ func uploadLine(vars envVars, uploader *s3manager.Uploader, conn *s3.S3, in, out
 			log.Fatalln(err)
 		}
 
-		k := key(fn, &vars.prefix)
+		k := key(fn)
 
 		// print link before finishing upload
 		var i strings.Builder

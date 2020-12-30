@@ -17,9 +17,6 @@ func mainInner() {
 
 	// load command line flags
 
-	r := "us-east-1"
-	region := &r
-
 	x := "1m"
 	expire := &x
 
@@ -40,7 +37,7 @@ func mainInner() {
 
 	minutes := checkDuration(expire)
 
-	conn, uploader := connect(vars, region)
+	conn, uploader := connect(vars)
 
 	toURL, upDone := upload(vars, uploader, conn, in, public)
 

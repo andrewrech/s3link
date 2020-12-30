@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -33,20 +32,19 @@ func main() {
 	usage()
 
 	// parse command line options
-	region := flag.String("region", "us-east-1", "AWS region")
 	expire := flag.String("expire", "1m", "URL lifetime")
-	qr := flag.Bool("qr", true, "Generate QR code?")
-	public := flag.Bool("public", false, "Create public link (insecure simple obfuscation)?")
+	qr := flag.Bool("qr", false, "Generate QR code?")
+	public := flag.Bool("public", false, "Create obfuscated public link?")
 	flag.Parse()
+
+	minutes := checkDuration(expire)
 
 	vars, err := loadVars()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	minutes := checkDuration(expire)
-
-	conn, uploader := connect(vars, region)
+	conn, uploader := connect(vars)
 
 	in, readDone := read(os.Stdin)
 
@@ -59,55 +57,10 @@ func main() {
 	<-urlDone
 }
 
-type envVars struct {
-	bucket string
-	prefix string
-	id     string
-	secret string
-	token  string
-}
-
-// loadVars loads required environmental variables.
-func loadVars() (vars envVars, err error) {
-	b, ok := os.LookupEnv("S3LINK_BUCKET")
-	if !ok {
-		return vars, errors.New("S3LIMK_BUCKET is unset")
-	}
-
-	prefix, ok := os.LookupEnv("S3LINK_PUB_LINK_PREFIX")
-	if !ok {
-		return vars, errors.New("S3LINK_PUB_LINK_PREFIX is unset")
-	}
-
-	id, ok := os.LookupEnv("S3LINK_AWS_ACCESS_KEY_ID")
-	if !ok {
-		log.Fatalln()
-		return vars, errors.New("S3LINK_AWS_ACCESS_KEY_ID is unset")
-	}
-
-	secret, ok := os.LookupEnv("S3LINK_AWS_SECRET_ACCESS_KEY")
-	if !ok {
-		return vars, errors.New("S3LINK_AWS_SECRET_ACCESS_KEY is unset")
-	}
-
-	token, _ := os.LookupEnv("S3LINK_AWS_SESSION_TOKEN")
-	if token != "" {
-		log.Println("using temporary AWS credentials")
-	}
-
-	vars.bucket = b
-	vars.prefix = prefix
-	vars.id = id
-	vars.secret = secret
-	vars.token = token
-
-	return vars, nil
-}
-
 // usage prints package usage.
 func usage() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "\nUpload files from Stdin to AWS S3 and generate an authenticated URL.\n")
+		fmt.Fprintf(os.Stderr, "\nUpload files to AWS S3 and generate authenticated URLs.\n")
 		fmt.Fprintf(os.Stderr, "\nUsage of %s:\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  echo 'file.txt' | s3link\n")
 		fmt.Fprintf(os.Stderr, "  echo 'pre-existing/bucket/key.ext' | s3link\n")
@@ -116,12 +69,8 @@ func usage() {
 		fmt.Fprintf(os.Stderr, `
 Environmental variables:
 
-    export S3LINK_BUCKET=bucket
-    export S3LINK_PUB_LINK_PREFIX=public-link-obfuscation-prefix
-
-    export S3LINK_AWS_ACCESS_KEY_ID=my_iam_access_key
-    export S3LINK_AWS_SECRET_ACCESS_KEY=my_iam_secret
-    export S3LINK_AWS_SESSION_TOKEN=my_iam_session_token [optional]
+    export S3LINK_BUCKET=upload-bucket
+    export AWS_SHARED_CREDENTIALS_PROFILE=default
 
 `)
 	}
@@ -144,19 +93,18 @@ func checkDuration(expire *string) (minutes *time.Duration) {
 	return &m
 }
 
-// connect reads AWS credentials from the environment and returns a connection.
-func connect(vars envVars, region *string) (conn *s3.S3, uploader *s3manager.Uploader) {
-	config := aws.Config{
-		Region:      aws.String(*region),
-		Credentials: credentials.NewStaticCredentials(vars.id, vars.secret, vars.token),
-	}
+// connect reads shared AWS credentials and returns a connection.
+func connect(vars envVars) (conn *s3.S3, uploader *s3manager.Uploader) {
 
-	// create S3 upload manager
-	s := session.Must(session.NewSession(&config))
-	conn = s3.New(s)
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Profile:           vars.credentialProfile,
+	}))
+
+	conn = s3.New(sess)
 
 	n := runtime.GOMAXPROCS(0)
-	uploader = s3manager.NewUploader(s, func(u *s3manager.Uploader) {
+	uploader = s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
 		u.Concurrency = n
 		u.MaxUploadParts = n
 		u.LeavePartsOnError = true
@@ -421,4 +369,28 @@ func uploadLine(vars envVars, uploader *s3manager.Uploader, conn *s3.S3, in, out
 		}
 	}
 	done <- 1
+}
+
+type envVars struct {
+	credentialProfile string
+	bucket            string
+}
+
+// loadVars loads environmental variables.
+func loadVars() (vars envVars, err error) {
+
+	credentialProfile, ok := os.LookupEnv("AWS_SHARED_CREDENTIALS_PROFILE")
+	if !ok {
+		credentialProfile = "default"
+	}
+
+	bucket, ok := os.LookupEnv("S3LINK_BUCKET")
+	if !ok {
+		log.Fatalln("S3LINK_BUCKET is unset")
+	}
+
+	vars.credentialProfile = credentialProfile
+	vars.bucket = bucket
+
+	return vars, nil
 }

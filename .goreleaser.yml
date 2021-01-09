@@ -1,49 +1,50 @@
+before:
+  hooks:
+    - go mod vendor
+    - go install
+    - echo '```' > docs.md; s3link -h >> docs.md 2>&1; echo '```' >> docs.md; gomarkdoc -u . >> docs.md
+release:
+  github:
+    owner: andrewrech
+    name: s3link
 builds:
-- env:
-  - CGO_ENABLED=0
-  goos:
-    - freebsd
-    - windows
-    - darwin
-    - linux
-  goarch:
-    - amd64
-    - arm
-    - arm64
+  -
+    main: s3link.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - freebsd
+      - windows
+      - darwin
+dockers:
+  -
+    binaries:
+      - s3link
+    image_templates:
+      - "andrewrech/s3link:{{ .Tag }}"
+      - "andrewrech/s3link:v{{ .Major }}"
+      - "andrewrech/s3link:v{{ .Major }}.{{ .Minor }}"
+      - "andrewrech/s3link:latest"
 archives:
-- replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
+  -
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      amd64: x86_64
+    files:
+      - "*md"
+signs:
+  -
+    artifacts: all
 checksum:
   name_template: 'checksums.txt'
 snapshot:
   name_template: "{{ .Tag }}-next"
-signs:
-- artifacts: all
 changelog:
   sort: asc
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
-# nfpms:
-#   # note that this is an array of nfpm configs
-#   -
-#     homepage: https://github.com/andrewrech/s3link
-#     maintainer: "Andrew J. Rech <rech@rech.io>"
-#     license: "LGPL 3.0"
-#     formats:
-#       - deb
-#       - rpm
-# brews:
-#   -
-    # Repository to push the tap to.
-    # github:
-    #   owner: andrewrech
-    #   name: homebrew-s3link
-    # commit_author:
-    #   name: andrewrech
-    #   email: rech@rech.io
+      - '^docs:'
+      - '^test:'

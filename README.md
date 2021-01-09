@@ -1,57 +1,28 @@
-[![GoDoc](https://godoc.org/github.com/andrewrech/s3link?status.svg)](https://godoc.org/github.com/andrewrech/s3link) ![](https://img.shields.io/badge/version-0.0.6-blue.svg) ![](https://goreportcard.com/badge/github.com/andrewrech/s3link)
+[![GoDoc](https://godoc.org/github.com/andrewrech/s3link?status.svg)](https://godoc.org/github.com/andrewrech/s3link) [![](https://goreportcard.com/badge/github.com/andrewrech/s3link)](https://goreportcard.com/report/github.com/andrewrech/s3link) ![](https://img.shields.io/badge/docker-andrewrech/s3link:0.0.6-blue?style=plastic&logo=docker)
 
 # s3link
 
 Upload files from Stdin to AWS S3 and generate an authenticated URL.
 
-## Install
+## Installation
 
-[Releases](https://github.com/andrewrech/s3link/releases)
+See [Releases](https://github.com/andrewrech/s3link/releases).
 
-or
-
-```sh
- brew tap andrewrech/s3link
- brew install s3link
-```
-
-or
-
-```sh
-go get -u github.com/andrewrech/s3link
+```zsh
+go get -u -v github.com/andrewrech/s3link
 ```
 
 ## Usage
 
-```sh
-s3link -h
-```
+See `s3link -h` or [documentation](https://github.com/andrewrech/s3link/blob/main/docs.md)).
 
-```
-Upload files from Stdin to AWS S3 and generate an authenticated URL.
+## Testing
 
-Usage of s3link:
-  echo 'file.txt' | s3link
-  echo 'pre-existing/bucket/key.ext' | s3link
+```zsh
+git clone https://github.com/andrewrech/s3link &&
+cd s3link
 
-Defaults:
-  -expire string
-        URL lifetime (default "1m")
-  -public
-        Create public link (insecure simple obfuscation)?
-  -qr
-        Generate QR code? (default true)
-  -region string
-        AWS region (default "us-east-1")
-
-Environmental variables:
-
-    export S3LINK_BUCKET=bucket
-    export S3LINK_PUB_LINK_PREFIX=public-link-obfuscation-prefix
-
-    export S3LINK_AWS_ACCESS_KEY_ID=my_iam_access_key
-    export S3LINK_AWS_SECRET_ACCESS_KEY=my_iam_secret
-    export S3LINK_AWS_SESSION_TOKEN=my_iam_session_token [optional]
+go test
 ```
 
 ## Authors

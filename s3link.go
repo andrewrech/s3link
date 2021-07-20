@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"crypto/rand"
+	"crypto/sha512"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"flag"
@@ -71,6 +73,7 @@ Environmental variables:
 
     export S3LINK_BUCKET=upload-bucket
     export AWS_SHARED_CREDENTIALS_PROFILE=default
+    export S3LINK_OBFUSCATION_KEY=key-for-filename-obfuscation
 
 `)
 	}
@@ -95,7 +98,6 @@ func checkDuration(expire *string) (minutes *time.Duration) {
 
 // connect reads shared AWS credentials and returns a connection.
 func connect(vars envVars) (conn *s3.S3, uploader *s3manager.Uploader) {
-
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 		Profile:           vars.credentialProfile,
@@ -230,11 +232,23 @@ func randomHex(n int) string { return hex.EncodeToString(randomBytes(n)) }
 
 // key generates an AWS S3 key.
 func key(name string) string {
-	p := randomHex(64)
+	p, ok := os.LookupEnv("S3LINK_OBFUSCATION_KEY")
+	if !ok {
+		p = randomHex(64)
+	}
 
 	var b strings.Builder
 
+	// create hash from obfuscation key and filename
 	b.WriteString(p)
+	b.WriteString(filepath.Base(name))
+	input := []byte(b.String())
+	hash := sha512.Sum512(input)
+	output := base64.StdEncoding.EncodeToString(hash[:])
+
+	b.Reset()
+
+	b.WriteString(output)
 	b.WriteString("/")
 	b.WriteString(filepath.Base(name))
 
@@ -378,7 +392,6 @@ type envVars struct {
 
 // loadVars loads environmental variables.
 func loadVars() (vars envVars, err error) {
-
 	credentialProfile, ok := os.LookupEnv("AWS_SHARED_CREDENTIALS_PROFILE")
 	if !ok {
 		credentialProfile = "default"

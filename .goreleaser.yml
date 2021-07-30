@@ -19,8 +19,6 @@ builds:
       - darwin
 dockers:
   -
-    binaries:
-      - s3link
     image_templates:
       - "andrewrech/s3link:{{ .Tag }}"
       - "andrewrech/s3link:v{{ .Major }}"

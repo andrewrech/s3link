@@ -7,23 +7,11 @@ Upload files from Stdin to AWS S3 and generate an authenticated URL.
 ## Installation
 
 See [Releases](https://github.com/andrewrech/s3link/releases).
-
-```zsh
-go get -u -v github.com/andrewrech/s3link
-```
+=
 
 ## Usage
 
 See `s3link -h` or [documentation](https://github.com/andrewrech/s3link/blob/main/docs.md)).
-
-## Testing
-
-```zsh
-git clone https://github.com/andrewrech/s3link &&
-cd s3link
-
-go test
-```
 
 ## Authors
 

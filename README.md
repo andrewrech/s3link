@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/andrewrech/s3link?status.svg)](https://godoc.org/github.com/andrewrech/s3link) [![](https://goreportcard.com/badge/github.com/andrewrech/s3link)](https://goreportcard.com/report/github.com/andrewrech/s3link) ![](https://img.shields.io/badge/docker-andrewrech/s3link:0.0.7-blue?style=plastic&logo=docker)
+[![GoDoc](https://godoc.org/github.com/andrewrech/s3link?status.svg)](https://godoc.org/github.com/andrewrech/s3link) [![](https://goreportcard.com/badge/github.com/andrewrech/s3link)](https://goreportcard.com/report/github.com/andrewrech/s3link)
 
 # s3link
 

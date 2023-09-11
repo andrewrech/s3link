@@ -1,29 +1,25 @@
 before:
   hooks:
     - go mod vendor
-    - go install
-    - echo '```' > docs.md; s3link -h >> docs.md 2>&1; echo '```' >> docs.md; gomarkdoc -u . >> docs.md
+    - go mod tidy
 release:
   github:
     owner: andrewrech
     name: s3link
 builds:
   -
-    main: s3link.go
     env:
       - CGO_ENABLED=0
     goos:
       - linux
-      - freebsd
       - windows
       - darwin
-dockers:
-  -
-    image_templates:
-      - "andrewrech/s3link:{{ .Tag }}"
-      - "andrewrech/s3link:v{{ .Major }}"
-      - "andrewrech/s3link:v{{ .Major }}.{{ .Minor }}"
-      - "andrewrech/s3link:latest"
+    goarch:
+      - amd64
+      - arm
+      - arm64
+universal_binaries:
+  - replace: true
 archives:
   -
     replacements:
@@ -44,5 +40,3 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
